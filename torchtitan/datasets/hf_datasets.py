@@ -22,7 +22,7 @@ except ImportError as e:
 from torchtitan.datasets.tokenizer import Tokenizer
 from torchtitan.logging_utils import logger
 
-from datasets import load_dataset
+from datasets import load_dataset, interleave_datasets
 from datasets.distributed import split_dataset_by_node
 
 # map from dataset name to a local directory, or
@@ -30,6 +30,7 @@ from datasets.distributed import split_dataset_by_node
 _supported_datasets = {
     "c4_mini": "torchtitan/datasets/c4_mini",
     "c4": "allenai/c4",
+    "slimpajama+starcoderdata": "self-mixed dataset",
 }
 
 
@@ -99,6 +100,13 @@ class HuggingFaceDataset(IterableDataset, Stateful):
             # c4 is huge, and requires both streaming and language selection
             # (we default to en)
             ds = load_dataset(dataset_path, name="en", split="train", streaming=True)
+        elif dataset_name == "slimpajama+starcoderdata":
+            logger.info(f"Preparing SlimPajama dataset")
+            slimpajama = load_dataset("/nvme0n1/datasets/SlimPajama-627B", split="train", streaming=True)
+            logger.info(f"Preparing StarcoderData dataset")
+            # the original code only use the "text" column in a dataset, as it was designed for c4
+            starcoderdata = load_dataset("/nvme0n1/datasets/starcoderdata/", split="train", streaming=True).rename_column("content", "text")
+            ds = interleave_datasets([slimpajama, starcoderdata], stopping_strategy="all_exhausted")
         else:
             ds = load_dataset(dataset_path, split="train")
 

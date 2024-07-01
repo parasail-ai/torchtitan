@@ -30,6 +30,30 @@ llama2_configs = {
 
 llama3_configs = {
     "debugmodel": ModelArgs(dim=256, n_layers=8, n_heads=16, rope_theta=500000),
+    "Nano": ModelArgs(
+        dim=512,
+        n_layers=8,
+        n_heads=8,
+        n_kv_heads=4,
+        multiple_of=512,
+        rope_theta=500000,
+    ),
+    "Micro": ModelArgs(
+        dim=1024,
+        n_layers=16,
+        n_heads=16,
+        n_kv_heads=8,
+        multiple_of=1024,
+        rope_theta=500000,
+    ),
+    "Tiny": ModelArgs(
+        dim=2048,
+        n_layers=22,
+        n_heads=32,
+        n_kv_heads=8,
+        multiple_of=1024,
+        rope_theta=500000,
+    ),
     "8B": ModelArgs(
         dim=4096,
         n_layers=32,
