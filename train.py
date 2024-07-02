@@ -326,6 +326,8 @@ def main(job_config: JobConfig):
 
     data_iterator = iter(data_loader)
 
+    ntokens_trained = 0
+
     checkpoint.reset()
 
     # variables used to keep info for metrics logging
@@ -352,6 +354,7 @@ def main(job_config: JobConfig):
             batch = next(data_iterator)
             input_ids, labels = batch
             ntokens_since_last_log += labels.numel()
+            ntokens_trained += labels.numel()
             data_loading_times.append(timer() - data_load_start)
 
             input_ids = input_ids.cuda()
@@ -453,6 +456,7 @@ def main(job_config: JobConfig):
                     "memory/max_reserved(%)": gpu_mem_stats.max_reserved_pct,
                     "memory/num_alloc_retries": gpu_mem_stats.num_alloc_retries,
                     "memory/num_ooms": gpu_mem_stats.num_ooms,
+                    "total_num_tokens": ntokens_trained,
                 }
                 metric_logger.log(metrics, step=train_state.step)
 
