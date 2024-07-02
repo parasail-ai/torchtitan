@@ -6,7 +6,7 @@ import torch
 # and then push both the model and the tokenizer to the hub
 
 # !!! Set your target HF hub repo id !!!
-hub_id = "parasail-ai/MicroLlama3_slimpajama_starcoderdata_ckpt_step-800k"
+hub_id = "parasail-ai/TinyLlama3_slimpajama_starcoderdata_ckpt_step-600k"
 
 # Then just run
 # `python 3-push_to_HF_hub.py`
@@ -17,6 +17,6 @@ model = LlamaForCausalLM.from_pretrained(output_dir, torch_dtype=torch.bfloat16)
 tokenizer = AutoTokenizer.from_pretrained(output_dir)
 
 print("Pushing model to hub")
-model.push_to_hub(hub_id)
+model.push_to_hub(hub_id, private=True)
 print("Pushing tokenizer to hub")
 tokenizer.push_to_hub(hub_id)

@@ -9,8 +9,8 @@ import shutil
 # We use this script to prepare these file from the torch DCP files.
 
 # !!! Set these parameters before you run the script !!!
-model_arch_name = "Micro"
-dcp_checkpoint_dir = "/nvme0n1/ben/torchtitan/outputs_MicroLlama3/checkpoint/step-800000"
+model_arch_name = "Tiny"
+dcp_checkpoint_dir = "/nvme0n1/ben/torchtitan/outputs_TinyLlama3/checkpoint/step-600000"
 tokenizer_path = "/nvme0n1/ben/torchtitan/torchtitan/datasets/tokenizer/original/tokenizer.model"
 
 # In principle you don't need to change anything below
