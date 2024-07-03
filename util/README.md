@@ -67,3 +67,11 @@ The idea is to first load the HF repo into transformers and upload it to the hub
 #### Steps after uploading
 
 Navigate to HF hub and make the uploaded repo private (it's public by default), also add it to an appropriate collection.
+
+### Version incompatibility for `freqs_cis` errors
+
+I used different versions of torchtitan to train on Sakura 3 and 4. I manually turned off `freq_cis` layer export on Sakura 3, while the current main branch of torchtitan and the parasail fork (which is used on Sakura 4) will expect to see this layer in the checkpoint. Therefore, if you try to continue training of a checkpoint from Sakura 3 on Sakura 4, you may encounter
+`RuntimeError: Missing key in checkpoint state_dict: model.freqs_cis.` To bypass this, you can manually [turn off the persistance of freq_cis layers](https://github.com/parasail-ai/torchtitan/blob/7052ffb9e265e606392d6c81f4887e3e982f4dbf/torchtitan/models/llama/model.py#L367). This way torchtitan won't look for `freqs_cis` layers in your checkpoint files.
+
+#### Note 
+`freqs_cis` is a CONSTANT layer in the llama models. They can be [precomputed](https://github.com/pytorch/torchtitan/blob/b0ed7f075921357b01e28fddc6d90a2cc410bab3/torchtitan/models/llama/model.py#L408) before model deployement, and they only depends on the model architecture – namely they don't need to be trained. Since they are not trained weights, in principle you don't need to save them to checkpoints. So I removed them from the exported checkpoints for experimental purposes on Sakura 3. But the current [torchtitan implementation](https://github.com/parasail-ai/torchtitan/blob/7052ffb9e265e606392d6c81f4887e3e982f4dbf/torchtitan/models/llama/model.py#L360) (and our parasail fork, which is used on sakura 4) still has it turned on.
