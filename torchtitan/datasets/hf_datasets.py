@@ -11,6 +11,8 @@ import torch
 from torch.distributed.checkpoint.stateful import Stateful
 from torch.utils.data import IterableDataset
 
+from transformers import AutoTokenizer
+
 try:
     from torchdata.stateful_dataloader import StatefulDataLoader
 except ImportError as e:
@@ -31,6 +33,7 @@ _supported_datasets = {
     "c4_mini": "torchtitan/datasets/c4_mini",
     "c4": "allenai/c4",
     "slimpajama+starcoderdata": "self-mixed dataset",
+    "sharegpt_for_instruction_finetune": "custom dataset", 
 }
 
 
@@ -107,6 +110,9 @@ class HuggingFaceDataset(IterableDataset, Stateful):
             # the original code only use the "text" column in a dataset, as it was designed for c4
             starcoderdata = load_dataset("/nvme0n1/datasets/starcoderdata/", split="train", streaming=True).rename_column("content", "text")
             ds = interleave_datasets([slimpajama, starcoderdata], stopping_strategy="all_exhausted")
+        elif dataset_name == "sharegpt_for_instruction_finetune":
+            ds = load_dataset("Aeala/ShareGPT_Vicuna_unfiltered", split="train")
+            ds.set_transform(format_sharegpt)
         else:
             ds = load_dataset(dataset_path, split="train")
 
@@ -217,3 +223,23 @@ def build_hf_data_loader(
     )
 
     return DPAwareDataLoader(rank, hf_ds, batch_size=batch_size)
+
+aux_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
+def format_sharegpt(batch):
+    data = batch['conversations']
+    batch = {"text": []}
+    for d in data:
+        chat = []
+        for message in d:
+            if message["from"] == "gpt":
+                role = "assistant"
+            elif message["from"] == "human":
+                role = "user"
+            else:
+                raise ValueError(f"Invalid role {message['from']}")
+            chat.append({
+                "role": role,
+                "content": message["value"],
+            })
+        batch["text"].append(aux_tokenizer.apply_chat_template(chat, tokenize=False))
+    return batch
